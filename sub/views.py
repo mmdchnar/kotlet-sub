@@ -1,57 +1,62 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+# from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
 from base64 import b64encode, b64decode
-from sqlite3 import connect
 from json import loads
-
-
-X_UI_DB = 'x-ui.db'
-PORT = 2053
-DOMAIN = 'www.ay-tof-be-sharafet.top'
-EDGES = [
-    'mci.ay-tof-be-sharafet.top',
-    'mtn.ay-tof-be-sharafet.top',
-    'zapas.ay-tof-be-sharafet.top',
-    ]
-URI = 'vless://$UUID$@$DOMAIN$:$PORT$?mode=gun&security=tls&encryption=none&type=grpc&serviceName=&sni=$SNI$#$NAME$'
-
-
-def uri(uuid: str):
-    conn = connect(X_UI_DB)
-    json = conn.execute('select settings from inbounds where port=?', (PORT,)).fetchone()[0]
-    settings = loads(json)
-    for client in settings['clients']:
-        if client['id'] == uuid:
-            uris = {}
-            for edge in EDGES:
-                uri = URI
-                uri = uri.replace('$UUID$', client['id'])
-                uri = uri.replace('$DOMAIN$', edge)
-                uri = uri.replace('$PORT$', str(PORT))
-                uri = uri.replace('$SNI$', DOMAIN)
-                uri = uri.replace('$NAME$', f"[{client['email'][:3]}] {client['email'][4:]}")
-                uris[edge.split('.')[0].title()] = uri
-            return uris
+import xui
 
 
 def index(request):
-    return HttpResponse('Hello World!')
+    return HttpResponse('Hey BITCH!<br>What are you looking for ?! :)')
 
 
-def sub(request, uuid):
+def sub(request, slug):
     try:
-        uuid = b64decode(uuid.encode()).decode()
-    except:
-        uuid = None
-
-    if uuid:
+        uuid = b64decode(slug.encode()).decode()
         response = ''
-        uris = uri(uuid)
+        uris = xui.uri(uuid)
         for i in uris:
             response += uris[i] +'\n\n'
         response = b64encode(response.encode()).decode()
-    else:
-        response = '404'
+        return HttpResponse(response)
+    except:
+        return JsonResponse({'successful': False})
 
-    return HttpResponse(response)
 
+def create(request, slug):
+    try:
+        json = b64decode(slug.encode()).decode()
+        user = loads(json)
+        xui.create(user['user_id'], user['name'], user['uuid'])
+        return JsonResponse({'successful': True})
+    except:
+        return JsonResponse({'successful': False})
+
+
+def delete(request, slug):
+    try:
+        json = b64decode(slug.encode()).decode()
+        user = loads(json)
+        xui.delete(user['uuid'])
+        return JsonResponse({'successful': True})
+    except:
+        return JsonResponse({'successful': False})
+
+
+def rename(request, slug):
+    try:
+        json = b64decode(slug.encode()).decode()
+        user = loads(json)
+        xui.rename(user['uuid'], user['name'])
+        return JsonResponse({'successful': True})
+    except:
+        return JsonResponse({'successful': False})
+
+
+def uuid(request, slug):
+    try:
+        json = b64decode(slug.encode()).decode()
+        user = loads(json)
+        xui.change_uuid(user['user_id'], user['uuid'])
+        return JsonResponse({'successful': True})
+    except:
+        return JsonResponse({'successful': False})
