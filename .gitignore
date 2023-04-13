@@ -1,5 +1,6 @@
+sub/migrations/__pycache__/
 kotlet/__pycache__/
 sub/__pycache__/
-sub/migrations/__pycache__/
-x-ui.db
+__pycache__/
 consts.py
+x-ui.db
