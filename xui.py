@@ -23,6 +23,7 @@ def change_uuid(user_id: int, uuid: str):
             conn.execute("update inbounds set settings=? where port=?",
                          (dumps(settings, indent=2), PORT))
             conn.commit()
+            conn.close()
             break
 
 # Get config URi
@@ -55,6 +56,8 @@ def rename(uuid: str, name: str):
             conn.execute("update inbounds set settings=? where port=?",
                             (dumps(settings, indent=2), PORT))
             conn.commit()
+            conn.close()
+            break
 
 # Delete config
 def delete(uuid: str):
@@ -67,6 +70,8 @@ def delete(uuid: str):
             conn.execute("update inbounds set settings=? where port=?",
                             (dumps(settings, indent=2), PORT))
             conn.commit()
+            conn.close()
+            break
 
 # Create new config
 def create(user_id: int, name: str, uuid: str):
@@ -94,3 +99,4 @@ def create(user_id: int, name: str, uuid: str):
     conn.execute("update inbounds set settings=? where port=?",
                     (dumps(settings, indent=2), PORT))
     conn.commit()
+    conn.close()
