@@ -32,13 +32,13 @@ app = Flask(__name__)
 
 
 @app.route('/')
-def bitch():
-    return 'Hey BITCH!<br>What are you looking for ?! :)'
+def index():
+    return 'Kotlet was Eaten by Dogs!! :)'
 
 
 @app.route('/sub/<base64_uuid>')
 def sub(base64_uuid):
-    response = 'Hey BITCH!<br>What are you looking for ?! :)'
+    response = 'Kotlet was Eaten by Dogs!! :)'
 
     uuid = b64decode(base64_uuid.encode()).decode()
 
