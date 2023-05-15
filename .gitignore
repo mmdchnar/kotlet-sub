@@ -1,6 +1,1 @@
-sub/migrations/__pycache__/
-kotlet/__pycache__/
-sub/__pycache__/
-__pycache__/
-consts.py
-x-ui.db
+.env
