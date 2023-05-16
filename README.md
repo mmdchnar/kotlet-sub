@@ -27,4 +27,6 @@ DOMAINS_values=IPv4.mysite.com,IPv6.mysite.com
 # The api username and password
 USER=username
 PASS=password
+
+DEBUG=0
 ```
