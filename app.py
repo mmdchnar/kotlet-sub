@@ -30,11 +30,6 @@ PASSWORD = os.environ.get("PASS")
 app = Flask(__name__)
 
 
-@app.route('/')
-def index():
-    return 'Kotlet was Eaten by Dogs!! :)'
-
-
 @app.route('/sub/<base64_uuid>')
 def sub(base64_uuid):
     response = 'Kotlet was Eaten by Dogs!! :)'
@@ -83,6 +78,18 @@ def sub(base64_uuid):
         print('Error from My Exception: ', error)
 
     return response
+
+
+@app.errorhandler(404)
+def not_found(e):
+    print('from error 404:', e)
+    return 'Kotlet was Eaten by Dogs!! :)'
+
+
+@app.errorhandler(500)
+def not_found(e):
+    print('from error 500:', e)
+    return 'Kotlet was Eaten by Dogs!! :)'
 
 
 if __name__ == '__main__':
