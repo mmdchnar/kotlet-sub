@@ -58,7 +58,7 @@ def sub(base64_uuid):
             usage = round((user['up'] + user['down']) / 1073741824, 2)
             if user['total']:
                 total_gb = round(user['total'] / 1073741824, 2)
-                gb = (user['total'] - usage)
+                gb = (total_gb - usage)
             else:
                 total_gb = 0
                 gb = None
