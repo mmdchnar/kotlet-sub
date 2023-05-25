@@ -1,10 +1,11 @@
 import os
 import requests
 from json import loads
-from flask import Flask
+from flask import Flask, render_template
 from datetime import datetime
 from dotenv import load_dotenv
 from base64 import b64encode, b64decode
+from urllib import parse
 
 load_dotenv()
 
@@ -18,11 +19,17 @@ URI = os.environ.get("URI") \
     .replace('$PBK$', PBK) \
     .replace('$SID$', SID) \
     .replace('$PORT$', PORT)
+
+HOST = os.environ.get("HOST")
 PANEL_URL = os.environ.get("PANEL_URL")
 API_PATH = os.environ.get("API_PATH")
+
 DOMAINS_keys = os.environ.get("DOMAINS_keys")
 DOMAINS_values = os.environ.get("DOMAINS_values")
 DOMAINS = dict(zip(DOMAINS_keys.split(','), DOMAINS_values.split(',')))
+
+CONTACT_NAME = os.environ.get("CONTACT_NAME")
+CONTACT_LINK = os.environ.get("CONTACT_LINK")
 
 USERNAME = os.environ.get("USER")
 PASSWORD = os.environ.get("PASS")
@@ -37,46 +44,61 @@ session.post(f'{PANEL_URL}/login',
                  'username': USERNAME,
                  'password': PASSWORD,
              })
+print('Logged In!')
 
 
 def sub(base64_uuid):
-    response = 'Kotlet was Eaten by Dogs!! :)'
     uuid = b64decode(base64_uuid.encode()).decode()
-
     req = session.get(f'{PANEL_URL}{API_PATH}/get/{INBOUND_ID}')
-    print('get')
     clients = loads(req.json()['obj']['settings'])['clients']
     for client in clients:
-        print(client)
         if client['id'] == uuid:
             user = session.get(f"{PANEL_URL}{API_PATH}/getClientTraffics/{client['email']}").json()['obj']
-            print('traffic')
-            status = client['enable'] and user['enable']
-            status = '🟢' if status else '🔴'
+            enable = client['enable'] and user['enable']
+            usage = round((user['up'] + user['down']) / 1073741824, 2)
             if user['total']:
-                total = (user['total'] - (user['up'] + user['down'])) / 1073741824
-                total = round(total, 2)
+                total_gb = round(user['total'] / 1073741824, 2)
+                gb = (user['total'] - usage)
             else:
-                total = '∞'
+                total_gb = 0
+                gb = None
             if user['expiryTime']:
-                expiry = (datetime.fromtimestamp(user['expiryTime'] // 1000) - datetime.now()).days
+                days = (datetime.fromtimestamp(user['expiryTime'] // 1000) - datetime.now()).days
             else:
-                expiry = '∞'
+                days = None
             uris = {}
             for domain in DOMAINS:
                 uri = URI
                 uri = uri.replace('$UUID$', uuid)
                 uri = uri.replace('$DOMAIN$', DOMAINS[domain])
-                uri = uri.replace('$NAME$',
-                                  f"{status} ({domain}) {total} GB | {expiry} Days | "
-                                  f"{client['email'][4:]} {client['email'][:3]}")
+                name = f"{'🟢' if enable else '🔴'} ({domain}) {gb if gb else '∞'} GB | " \
+                       f"{days if days else '∞'} Days | {client['email']}"
+                name = parse.quote(name)
+                uri = uri.replace('$NAME$', name)
                 uris[domain] = uri
 
-            response = ''
+            configs = ''
             for i in uris:
-                response += uris[i] + '\n\n'
-            response = b64encode(response.encode()).decode()
-    return response
+                configs += uris[i] + '\n\n'
+            configs = b64encode(configs.encode()).decode()
+            links = {
+                'Subscription Link': f'{HOST}/sub/{base64_uuid}',
+                'All Links': configs,
+            }
+            links.update(uris)
+            return render_template(
+                'user_info.html',
+                enable=enable,
+                links=links,
+                name=user['email'],
+                gb=gb,
+                total_gb=total_gb,
+                usage=usage,
+                days=days,
+                uris=uris,
+                contact_name=CONTACT_NAME,
+                contact_link=CONTACT_LINK,
+            )
 
 
 @app.route('/sub/<base64_uuid>')
@@ -106,4 +128,4 @@ def internal_error(e):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=bool(DEBUG))

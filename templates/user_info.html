@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ '🟢' if enable else '🔴' }} {{ name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://unpkg.com/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+</head>
+<body class="bg-gray-100">
+
+<div class="container mx-auto mt-4 w-full">
+    <div class="bg-white rounded-lg shadow-lg px-8 py-6 w-full">
+        {% if enable %}
+            <p class="text-center bg-green-600 text-white px-2 py-1 rounded mb-12">ON</p>
+        {% else %}
+            <p class="text-center bg-red-600 text-white px-2 py-1 rounded-full mb-12">OFF</p>
+        {% endif %}
+        <h1 class="text-3xl font-bold text-center mb-12">{{ name }}</h1>
+        <div class="mb-4">
+            <div class="h-4 rounded-full bg-pink-300">
+                <div class="h-full rounded-full bg-pink-600"
+                     style="width: {{ ((days / 30 * 100) if days > 0 else 0) if days and (days / 30 * 100) < 100 else 100 }}%"></div>
+            </div>
+            <p class="text-sm font-bold text-gray-700 text-center mt-3">{{ days if days else '∞' }} Days / 30 Days</p>
+        </div>
+        <br>
+        <div class="mb-4">
+            <div class="h-6 rounded-full bg-yellow-300">
+                <div class="h-6 h-full rounded-full bg-yellow-600 dark:text-white text-white text-center"
+                     style="width: {{ ((gb / total_gb * 100) if gb > 0 else 0) if total_gb else 100 }}%">
+                    {{ gb if gb else usage }} GB
+                </div>
+            </div>
+            <p class="text-sm font-bold text-gray-700 text-center mt-5">{{ gb if gb else '∞' }} GB / {{ total_gb }} GB</p>
+        </div>
+        <br>
+        <br>
+        {% for link_itle in links %}
+            <div class="text-center">
+                {% if link_itle == 'Subscription Link' %}
+                    <button id="show-qr-{{ link_itle|replace(' ', '') }}"
+                            class="mx-auto w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-100 rounded mb-4">
+                        {{ link_itle }}
+                    </button>
+                {% elif link_itle == 'All Links' %}
+                    <button id="show-qr-{{ link_itle|replace(' ', '') }}"
+                            class="mx-auto w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-100 rounded mb-4">
+                        {{ link_itle }}
+                    </button>
+                    <hr class="border-b-2 border-gray-300 mb-6">
+                {% else %}
+                    <button id="show-qr-{{ link_itle|replace(' ', '') }}"
+                            class="mx-auto w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-100 rounded mb-4">
+                        {{ link_itle }}
+                    </button>
+                {% endif %}
+                </button>
+            </div>
+            <div id="qr-modal-{{ link_itle|replace(' ', '') }}" class="hidden">
+                <div class="modal-container">
+                    <div class="qr-container">
+                        <button id="close-qr-{{ link_itle|replace(' ', '') }}"
+                                class="font-bold bg-red-500 text-white px-3 py-2 rounded mb-8">
+                            X
+                        </button>
+                        <div id="qrcode-{{ link_itle|replace(' ', '') }}"></div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        <p class="text-center mt-8">
+            <a href="{{ contact_link }}" class="text-blue-500 hover:underline">
+                {{ contact_name }}
+            </a>
+        </p>
+    </div>
+</div>
+<script>
+    {% for link_itle, link in links.items() %}
+        const qrcode{{ link_itle|replace(' ', '') }} = new QRCode(document.getElementById("qrcode-{{ link_itle|replace(' ', '') }}"), {
+            text: '{{ link | safe }}',
+            width: 300,
+            height: 300,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L
+        });
+        const qrcodeElement{{ link_itle|replace(' ', '') }} = document.getElementById("qrcode-{{ link_itle|replace(' ', '') }}");
+        qrcodeElement{{ link_itle|replace(' ', '') }}.addEventListener("click", () => {
+            navigator.clipboard.writeText('{{ link | safe }}')
+                .then(() => {
+                    console.log("Text copied to clipboard");
+                    alert('Link copied to clipboard!');
+                })
+                .catch((err) => {
+                    console.error("Failed to copy text: ", err);
+                });
+        });
+
+        const showQrBtn{{ link_itle|replace(' ', '') }} = document.getElementById("show-qr-{{ link_itle|replace(' ', '') }}");
+        showQrBtn{{ link_itle|replace(' ', '') }}.addEventListener("click", () => {
+            document.getElementById("qr-modal-{{ link_itle|replace(' ', '') }}").classList.remove("hidden");
+        });
+
+        const closeBtn{{ link_itle|replace(' ', '') }} = document.getElementById("close-qr-{{ link_itle|replace(' ', '') }}");
+        closeBtn{{ link_itle|replace(' ', '') }}.addEventListener("click", () => {
+            document.getElementById("qr-modal-{{ link_itle|replace(' ', '') }}").classList.add("hidden");
+        });
+    {% endfor %}
+</script>
+<style>
+    .modal-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .qr-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+</body>
+</html>
+
+<!--
+{% for n, uri in uris.items() %}
+{{ uri }}
+{% endfor %}
+-->
